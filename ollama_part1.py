@@ -42,11 +42,12 @@ prompt = ChatPromptTemplate.from_messages([
 # Visit https://huggingface.co/settings/tokens and create one
 # Then set it as an environment variable: HUGGINGFACEHUB_API_TOKEN
 llm = HuggingFaceEndpoint(
-    repo_id="HuggingFaceH4/zephyr-7b-beta",  # You can change to any supported model
+    repo_id="tiiuae/falcon-7b-instruct",
     task="text-generation",
     max_new_tokens=256,
     temperature=0.5
 )
+
 
 output_parser = StrOutputParser()
 chain = prompt | llm | output_parser
