@@ -1,4 +1,4 @@
 streamlit
 langchain
-huggingface_hub
+huggingface_hub<0.22.0
 langchain-community
