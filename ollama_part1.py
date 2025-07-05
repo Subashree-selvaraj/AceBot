@@ -1,63 +1,60 @@
 import streamlit as st
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from openai import OpenAI
+import os
 
-# Page Configuration
-st.set_page_config(
-    page_title="AceBot - Interview Prep Assistant",
-    page_icon="🤖",
-    layout="centered"
+# -------------------------
+# Setup API client
+# -------------------------
+api_key = os.getenv("OPENROUTER_API_KEY")
+
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=api_key
 )
 
-# Title and description
-st.title("🤖 AceBot - Interview Prep Assistant")
-st.markdown("Get ready to ace your interview! Ask me anything.")
+# -------------------------
+# Streamlit Page Config
+# -------------------------
+st.set_page_config(page_title="AceBot - ChatGPT Assistant", page_icon="🤖", layout="centered")
 
-# Load tokenizer and model (load only once)
-@st.cache_resource
-def load_model():
-    tokenizer = AutoTokenizer.from_pretrained("bigscience/bloomz-560m")
-    model = AutoModelForCausalLM.from_pretrained("bigscience/bloomz-560m")
-    return tokenizer, model
+st.title("🤖 AceBot - ChatGPT-Quality Assistant")
+st.markdown("Ask me anything about interview preparation!")
 
-tokenizer, model = load_model()
-
-# Initialize chat history
+# -------------------------
+# Initialize Session State
+# -------------------------
 if "history" not in st.session_state:
     st.session_state.history = []
 
-# Display chat history
-for message in st.session_state.history:
-    st.markdown(f"**You:** {message['user']}")
-    st.markdown(f"**AceBot:** {message['bot']}")
+# -------------------------
+# Display Chat History
+# -------------------------
+for i, chat in enumerate(st.session_state.history):
+    st.markdown(f"**You:** {chat['user']}")
+    st.markdown(f"**AceBot:** {chat['assistant']}")
 
-# Input box
-user_input = st.text_input("Type your question and press Enter:")
+# -------------------------
+# Input Box
+# -------------------------
+query = st.text_input("Type your question and press Enter:")
 
-# Process input
-if user_input:
-    # Encode input prompt
-    inputs = tokenizer(user_input, return_tensors="pt")
+# -------------------------
+# Process User Input
+# -------------------------
+if query:
+    with st.spinner("Thinking..."):
+        completion = client.chat.completions.create(
+            model="openai/gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a helpful, professional interview preparation assistant."},
+                {"role": "user", "content": query}
+            ]
+        )
+        response = completion.choices[0].message.content
 
-    # Generate text
-    outputs = model.generate(
-        **inputs,
-        max_length=200,
-        do_sample=True,
-        temperature=0.7,
-        top_p=0.9
-    )
+    # Save to history
+    st.session_state.history.append({"user": query, "assistant": response})
 
-    # Decode output
-    response = tokenizer.decode(outputs[0], skip_special_tokens=True)
-
-    # Add to history
-    st.session_state.history.append({
-        "user": user_input,
-        "bot": response
-    })
-
-    # Display latest response
-    st.markdown("### 🤔 Your Question")
-    st.write(user_input)
-    st.markdown("### 💡 AceBot's Response")
-    st.write(response)
+    # Display
+    st.markdown(f"**You:** {query}")
+    st.markdown(f"**AceBot:** {response}")
