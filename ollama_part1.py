@@ -36,11 +36,12 @@ prompt = ChatPromptTemplate.from_messages([
 ])
 
 llm = HuggingFaceEndpoint(
-    repo_id="bigscience/bloom-560m",
+    repo_id="gpt2",
     task="text-generation",
     max_new_tokens=256,
     temperature=0.7
 )
+
 
 output_parser = StrOutputParser()
 chain = prompt | llm | output_parser
